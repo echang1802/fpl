@@ -59,6 +59,34 @@ class fpl_class:
                     transfers[pos] = {"out": player_out, "in": candidates, "improvement": int(improvement)}
         self._choose_best_transfer(transfers)
 
+    def choose_transfer(self):
+        change_transfer = input("\nChoose other transfer?\n")
+        if change_transfer.lower() != "yes":
+            return
+
+        ready = False
+        while not ready:
+            search_by = input("\nSearch player by:\n")
+            value = input("\nSearch by {}:\n".format(search_by))
+            print(self.elements.loc[self.elements[search_by] == value])
+            code = input("\nPlayer code:\n")
+            if not (code in self.elements.code):
+                continue
+            print("\nYour team is:")
+            print(self.team)
+            player_out = int(input("\nPlayer out code:\n"))
+            try:
+                ready = self.elements.loc[self.elements.code == code].cost.values[0] >= (self.team.loc[self.team.code == player_out].cost.values[0] + self.bank)
+            except:
+                ready = False
+
+        self.transfer = {
+            "out" : self.team.loc[self.team.code == player_out],
+            "in" : self.elements.loc[self.elements.code == code],
+            "improvement" : self.team.loc[self.team.code == player_out].value_season.values[0] - self.elements.loc[self.elements.code == code].value_season.values[0]
+        }
+        print(self.transfer)
+
     def make_transfer(self, proceed):
         if proceed.lower() != "yes":
             return
@@ -68,4 +96,6 @@ class fpl_class:
         with open(self.teamFile, "wb") as file:
             pickle.dump((self.team, self.bank), file)
 
-        print("Transfer made -> Money left in bank: ", self.bank)
+        print("Transfer made")
+        print("Money left in bank: ", self.bank)
+        print("Improvement: ", self.transfer["improvement"])
