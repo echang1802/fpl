@@ -1,6 +1,7 @@
 import pickle
 import requests
 import pandas as pd
+from sys import argv
 
 url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
 r = requests.get(url)
@@ -23,5 +24,5 @@ bank = 0.1
 team = elements.loc[elements.code.isin(team_players)]
 print(team)
 
-with open("data/mokaFC", "wb") as file:
+with open("data/{}".format(argv[1]), "wb") as file:
     pickle.dump((team, bank), file)

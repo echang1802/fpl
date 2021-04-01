@@ -1,12 +1,15 @@
 
+from sys import argv
 from fpl_class import fpl_class
 
-fpl = fpl_class()
+if __name__ == "__main__":
 
-fpl.get_team("data/mokaFC")
+    fpl = fpl_class()
 
-fpl.suggest_transfer()
+    fpl.get_team("data/{}".format(argv[1]))
 
-#fpl.choose_transfer()
+    fpl.suggest_transfer()
 
-fpl.make_transfer(input("\nMake transfer?\n"))
+    #fpl.choose_transfer()
+
+    fpl.make_transfer(input("\nMake transfer?\n"))
