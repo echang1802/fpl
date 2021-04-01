@@ -2,8 +2,10 @@
 from sys import argv
 from tableau_data_class import tableau_data
 
-data = tableau_data(argv[1])
+if __name__ == '__main__':
+    
+    data = tableau_data(argv[1])
 
-data.generate_gameweek_dreamteam()
+    data.generate_gameweek_dreamteam()
 
-data.write_data()
+    data.write_data()

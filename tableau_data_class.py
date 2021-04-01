@@ -1,5 +1,4 @@
 
-
 import requests
 import pandas as pd
 
@@ -26,31 +25,37 @@ class tableau_data:
         teams = pd.DataFrame(json['teams'])[["id", "name"]].set_index("id")
         self.elements["team"] = self.elements.team.map(teams.name)
 
-    def _get_top_player_by_postition(self, position):
+    def _get_top_players_by_postition(self, position):
         topPlayers = self.elements.loc[self.elements.position == position]
         topPlayers["cost"] *= -1
-        return topPlayers.sort_values(by = ["event_points", "cost"], ascending = False).head(5).reset_index(drop = True)
+        return topPlayers.sort_values(by = ["event_points", "cost"], ascending = False).head(10).reset_index(drop = True)
 
     def generate_gameweek_dreamteam(self):
-        dreamteam = []
         # Goalkeeper
-        dreamteam.append(self._get_top_player_by_postition("Goalkeeper").code[0])
+        dreamteam = self._get_top_players_by_postition("Goalkeeper").head(1)
 
         # Best minimal quantity of player by each position
         positions = ["Forward", "Midfielder", "Defender"]
         topPlayers = pd.DataFrame()
         for aux in range(1,4):
-            topPositionPlayers = self._get_top_player_by_postition(positions[aux - 1])
-            for x in topPositionPlayers.code[:aux]: dreamteam.append(x)
-            topPlayers = topPlayers.append(topPositionPlayers[aux:])
+            topPositionPlayers = self._get_top_players_by_postition(positions[aux - 1])
+            topPlayers = topPlayers.append(topPositionPlayers)
 
         # Fill remaining spots
         topPlayers.sort_values(by = ["event_points", "cost"], ascending = False, inplace = True)
-        topPlayers.reset_index(drop = True, inplace = True)
-        for x in topPlayers.code[:4]: dreamteam.append(x)
+        postion_limit = {"Defender": 5, "Midfielder": 5, "Forward": 3}
+        for _, player in topPlayers.iterrows():
+            if (dreamteam.team == player.team).sum() >= 3 or (dreamteam.position == player.position).sum() >= postion_limit[player.position]:
+                continue
+            dreamteam = dreamteam.append(player)
+            if dreamteam.shape[0] == 11:
+                break
+
+        print(dreamteam)
 
         # Add column to main DataFrame
-        self.elements["gw_dreamteam"] = self.elements.code.isin(dreamteam)
+        self.elements["gw_dreamteam"] = self.elements.code.isin(dreamteam.code)
+
 
     def write_data(self):
         self.elements.to_csv("data/gameweek_{}.csv".format(self.gameweek), index = False, sep = ";")
