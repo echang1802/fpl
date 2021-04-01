@@ -27,9 +27,15 @@ class fpl_class:
         with open(self.teamFile, "rb") as file:
             self.team, self.bank = pickle.load(file)
 
+    def _get_banned_teams(self, player):
+        teams = self.team.team.value_counts()
+        teams[player.team] -= 1
+        self.banned_teams = teams.index[teams == 3]
+
     def _choose_best_transfer(self, transfers):
         if len(transfers) == 0:
             self.transfer = {}
+            print("No transfer is suggested")
             return
         improvement = 0
         for transfer in transfers.values():
@@ -48,7 +54,8 @@ class fpl_class:
         for pos in self.team.position.unique():
             transfers[pos] = {"out": None, "in": None, "improvement": 0}
             for _, player_out in self.team.loc[self.team.position == pos].iterrows():
-                candidates = (self.elements.position == pos) & (self.elements.value_season >= player_out.value_season) & (self.elements.cost <= (player_out.cost + self.bank)) & (~self.elements.code.isin(self.team.code))
+                self._get_banned_teams(player_out)
+                candidates = (self.elements.position == pos) & (self.elements.value_season >= player_out.value_season) & (self.elements.cost <= (player_out.cost + self.bank)) & (~self.elements.code.isin(self.team.code)) & (~self.elements.team.isin(self.banned_teams))
                 if sum(candidates) == 0:
                     continue
                 candidates = self.elements.loc[candidates]
