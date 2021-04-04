@@ -11,3 +11,8 @@ if __name__ == '__main__':
     data.generate_gameweek_dreamteam()
 
     data.write_gameweek_data()
+
+    # Get and write historical data
+    data.get_historical_data()
+
+    data.write_base_historical_data()

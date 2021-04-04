@@ -13,8 +13,8 @@ class tableau_data:
         r = requests.get(url)
         json = r.json()
 
-        columns = ["code", "first_name", "second_name", "event_points", "element_type", "team", "in_dreamteam", "total_points", "value_season"]
-        self.elements = pd.DataFrame(json['elements'])[columns]
+        columns = ["id", "code", "first_name", "second_name", "event_points", "element_type", "team", "in_dreamteam", "total_points", "value_season"]
+        self.elements = pd.DataFrame(json['elements'])[columns].set_index("id")
         self.elements["value_season"] = self.elements.value_season.astype(float)
         self.elements["total_points"] = self.elements.total_points.astype(int)
         self.elements["cost"] = self.elements.total_points / self.elements.value_season
@@ -78,3 +78,29 @@ class tableau_data:
 
     def write_gameweek_data(self):
         self.elements.to_csv("data/gameweek_{}.csv".format(self.gameweek), index = False, sep = ";")
+
+    def _get_fixtures_data(self):
+        url = "https://fantasy.premierleague.com/api/fixtures/"
+        r = requests.get(url.format(id))
+        json = r.json()
+
+        self.fixtures = pd.DataFrame(json)[["id", "event"]].set_index("id")
+        print(self.fixtures.head())
+
+    def get_historical_data(self):
+        self._get_fixtures_data()
+        self.history = pd.DataFrame()
+        columns = ["fixture", "total_points"]
+        url = " https://fantasy.premierleague.com/api/element-summary/{}/"
+        for id, player in self.elements.iterrows():
+            r = requests.get(url.format(id))
+            json = r.json()
+
+            fixtures =  pd.DataFrame(json['history'])[columns].set_index("fixture")
+            fixtures = fixtures.join(self.fixtures)
+            fixtures["player_id"] = id
+            self.history = self.history.append(fixtures)
+
+    def write_base_historical_data(self):
+        self.history.to_csv("data/history.csv", index = False, sep = ";")
+        self.elements[["first_name", "second_name", "position", "team"]].to_csv("data/players.csv", index = True, sep = ";")
