@@ -7,6 +7,8 @@ class tableau_data:
     def __init__(self, gameweek):
         self.gameweek = gameweek
 
+    def get_gameweek_data(self):
+
         url = 'https://fantasy.premierleague.com/api/bootstrap-static/'
         r = requests.get(url)
         json = r.json()
@@ -30,6 +32,23 @@ class tableau_data:
         topPlayers["cost"] *= -1
         return topPlayers.sort_values(by = ["event_points", "cost"], ascending = False).head(10).reset_index(drop = True)
 
+    def _validate_team(self, dreamteam):
+        if dreamteam.shape[0] < 11:
+            return False
+        if (dreamteam.position == "Defender").sum() < 3:
+            pos = dreamteam.loc[dreamteam.position.isin(["Midfielder", "Forward"])].event_points.idxmin()
+            dreamteam.drop(pos, inplace = True)
+            return False
+        if (dreamteam.position == "Midfielder").sum() < 2:
+            pos = dreamteam.loc[dreamteam.position.isin(["Defender", "Forward"])].event_points.idxmin()
+            dreamteam.drop(pos, inplace = True)
+            return False
+        if (dreamteam.position == "Forward").sum() < 1:
+            pos = dreamteam.loc[dreamteam.position.isin(["Defender", "Midfielder"])].event_points.idxmin()
+            dreamteam.drop(pos, inplace = True)
+            return False
+        return True
+
     def generate_gameweek_dreamteam(self):
         # Goalkeeper
         dreamteam = self._get_top_players_by_postition("Goalkeeper").head(1)
@@ -43,12 +62,13 @@ class tableau_data:
 
         # Fill remaining spots
         topPlayers.sort_values(by = ["event_points", "cost"], ascending = False, inplace = True)
+        topPlayers.reset_index(drop = True, inplace = True)
         postion_limit = {"Defender": 5, "Midfielder": 5, "Forward": 3}
         for _, player in topPlayers.iterrows():
             if (dreamteam.team == player.team).sum() >= 3 or (dreamteam.position == player.position).sum() >= postion_limit[player.position]:
                 continue
             dreamteam = dreamteam.append(player)
-            if dreamteam.shape[0] == 11:
+            if self._validate_team(dreamteam):
                 break
 
         print(dreamteam)
@@ -56,6 +76,5 @@ class tableau_data:
         # Add column to main DataFrame
         self.elements["gw_dreamteam"] = self.elements.code.isin(dreamteam.code)
 
-
-    def write_data(self):
+    def write_gameweek_data(self):
         self.elements.to_csv("data/gameweek_{}.csv".format(self.gameweek), index = False, sep = ";")
