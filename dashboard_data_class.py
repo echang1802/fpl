@@ -26,17 +26,21 @@ class dashboard_data:
         self.data = pd.DataFrame()
         for p_id, player in fpl_class.elements.iterrows():
             json = fpl_class._api_call(url.format(p_id))
-
+            
+            if type(json) != dict or not "history" in json.keys():
+                continue
             fixtures =  pd.DataFrame(json['history'])[main_columns].set_index("fixture")
             fixtures = fixtures.join(fpl_class.fixtures[fixture_columns])
             fixtures.sort_values(by = "kickoff_time", inplace = True)
             fixtures["fixture"] = range(fixtures.shape[0])
-            fixtures["player_id"] = id
-            fixtures = fixtures.set_index("player_id").join(self.elements[elements_columns])
+            fixtures["player_id"] = p_id
             self.data = self.data.append(fixtures)
-
-        self.data["position"] = self.data.element_type.map(fpl_class.element_types.singular_name)
+        
+        self.data = self.data.set_index("player_id").join(fpl_class.elements[elements_columns], how = "inner")
+        self.data["position"] = self.data.element_type.map(fpl_class.elements_type.singular_name)
         self.data["team"] = self.data.team.map(fpl_class.clubs.name)
+        self.data["team_a"] = self.data.team_a.map(fpl_class.clubs.name)
+        self.data["team_h"] = self.data.team_h.map(fpl_class.clubs.name)
         self.data.drop(columns = ["element_type"], inplace = True)
 
     def _get_top_players_by_postition(self, position):
