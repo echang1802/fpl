@@ -15,15 +15,15 @@ from model_class import model
 class fpl:
 
     def __init__(self):
-        with self._api_call("https://fantasy.premierleague.com/api/bootstrap-static/") as json:
-            self.elements = pd.DataFrame(json['elements'])
-            self.elements["value_season"] = self.elements.value_season.astype(float)
-            self.elements["total_points"] = self.elements.total_points.astype(int)
-            self.elements["cost"] = self.elements.total_points / self.elements.value_season
+        json = self._api_call("https://fantasy.premierleague.com/api/bootstrap-static/")
+        self.elements = pd.DataFrame(json['elements']).set_index("id")
+        self.elements["value_season"] = self.elements.value_season.astype(float)
+        self.elements["total_points"] = self.elements.total_points.astype(int)
+        self.elements["cost"] = self.elements.total_points / self.elements.value_season
 
-            self.elements_type = pd.DataFrame(json['element_types']).set_index("id")
+        self.elements_type = pd.DataFrame(json['element_types']).set_index("id")
 
-            self.clubs = pd.DataFrame(json['teams']).set_index("id")
+        self.clubs = pd.DataFrame(json['teams']).set_index("id")
 
         json = self._api_call("https://fantasy.premierleague.com/api/fixtures/")
         self.fixtures = pd.DataFrame(json).set_index("id")
