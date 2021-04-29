@@ -12,9 +12,9 @@ class dashboard_data:
 
     def _get_gameweek_data(self, fpl_class):
         columns = ["code", "first_name", "second_name", "event_points", "element_type", "team", "in_dreamteam", "cost"]
-        self.data = fpl_class.data[columns]
+        self.data = fpl_class.elements[columns]
 
-        self.data["position"] = self.data.element_type.map(fpl_class.element_types.singular_name)
+        self.data["position"] = self.data.element_type.map(fpl_class.elements_type.singular_name)
         self.data["team"] = self.data.team.map(fpl_class.clubs.name)
         self.data.drop(columns = ["element_type"], inplace = True)
 
@@ -26,7 +26,7 @@ class dashboard_data:
         self.data = pd.DataFrame()
         for p_id, player in fpl_class.elements.iterrows():
             json = fpl_class._api_call(url.format(p_id))
-            
+
             if type(json) != dict or not "history" in json.keys():
                 continue
             fixtures =  pd.DataFrame(json['history'])[main_columns].set_index("fixture")
@@ -35,7 +35,7 @@ class dashboard_data:
             fixtures["fixture"] = range(fixtures.shape[0])
             fixtures["player_id"] = p_id
             self.data = self.data.append(fixtures)
-        
+
         self.data = self.data.set_index("player_id").join(fpl_class.elements[elements_columns], how = "inner")
         self.data["position"] = self.data.element_type.map(fpl_class.elements_type.singular_name)
         self.data["team"] = self.data.team.map(fpl_class.clubs.name)
@@ -89,4 +89,4 @@ class dashboard_data:
         self.data["gw_dreamteam"] = self.data.code.isin(dreamteam.code)
 
     def save(self, gameweek):
-        self.data.to_csv("data/{}_{}.csv".format(self._data_type, self.gameweek), index = False, sep = ";")
+        self.data.to_csv("data/{}_{}.csv".format(self._data_type, gameweek), index = False, sep = ";")
