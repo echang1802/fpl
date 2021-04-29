@@ -33,25 +33,33 @@ class fpl:
         json = r.json()
         return json
 
-    def generate_gameweek_data(self, gameweek):
+    def _get_gameweek(self):
+        self._gameweek = self.fixtures.loc[~self.fixtures.finished].event.min()
+
+    def generate_gameweek_data(self):
+        self._get_gameweek()
         dashboard = dashboard_data("gameweek", self)
         dashboard.generate_gameweek_dreamteam()
-        dashboard.save(gameweek)
+        dashboard.save(self._gameweek)
 
-    def generate_season_data(self, gameweek):
+    def generate_season_data(self):
+        self._get_gameweek()
         dashboard = dashboard_data("season", self)
-        dashboard.save(gameweek)
+        dashboard.save(self._gameweek)
 
     def _read_team(self, club_name):
-        with open("clubs/{}".format(club_name), "r") as file:
-            team_elements = file.readlines()
+        import ast
+        with open("teams/{}".format(club_name), "r") as file:
+            team_elements = file.read()
+            team_elements = ast.literal_eval(team_elements)
 
         self.team = pd.DataFrame()
         self.bank = team_elements["bank"]
-        for club, players in team_elements.items()[1:]:
+        team_elements.pop("bank")
+        for club, players in team_elements.items():
             for player in players:
                 pos = (self.elements.web_name == player) & \
-                    (self.elements.team == self.club.index[self.club == club])
+                    (self.elements.team == self.clubs.index[self.clubs.name == club][0])
                 self.team = self.team.append(self.elements.loc[pos])
 
     def _predict_gameweek_scores(self, model_name):
@@ -115,11 +123,3 @@ class fpl:
         self._predict_gameweek_scores(model_name)
         self._suggest_transfer()
         self._save_transfer()
-
-# Save model module
-
-def save_model(model_name, clean_data, feature_engineering, sk_model):
-    new_model = model(clean_data, feature_engineering, sk_model)
-
-    with open("models/{}".format(model_name)) as file:
-        pickle.dump(new_model)
