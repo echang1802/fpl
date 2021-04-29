@@ -6,28 +6,16 @@ from sklearn.metrics import r2_score
 
 class model:
 
-    def __init__(self, get_data, clean_data, feature_engineering, sk_model):
+    def __init__(self, sk_model):
         self._model = sk_model
-        self._get_data_function = get_data
-        self._clean_data_function = clean_data
-        self._feature_engineering_function = feature_engineering
-
+        
     def init_data(self, fpl):
         
         self._data = self._get_dataset(fpl)
 
-        self._clean_dataset(self._data)
+        self._data = self._clean_dataset(self._data, self._options_cd)
 
-        self._feature_engineering(self._data)
-
-    def _get_dataset(self, fpl):
-        self._data = self._get_data_function(fpl)
-        
-    def _clean_dataset(self):
-        self._clean_data_function(self._data)
-
-    def _feature_engineering(self):
-        self._feature_engineering_function(self._data)
+        self._data = self._feature_engineering(self._data, self._options_fe)
 
     def predict(self):
         self.predictions = self._model.predict(self._data)
