@@ -18,11 +18,11 @@ elements.drop(columns = "element_type", inplace = True)
 teams = pd.DataFrame(json['teams'])[["id", "name"]].set_index("id")
 elements["team"] = elements.team.map(teams.name)
 
-team_players = [98980, 218023, 177815, 153366, 87873, 118748, 59859, 97299, 171314, 141746, 195473, 78830, 85971, 101982, 55459]
-bank = 0.1
+team_players = [85633, 111234, 214590, 432830, 227444, 247348, 209036, 118748, 153133, 430871, 446008, 102057, 178186, 247412, 232185]
+bank = 0.0
 
 team = elements.loc[elements.code.isin(team_players)]
 print(team)
 
-with open("data/{}".format(argv[1]), "wb") as file:
+with open("teams/{}".format(argv[1]), "wb") as file:
     pickle.dump((team, bank), file)
